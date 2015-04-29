@@ -5,94 +5,111 @@
 #include "object.hpp"
 #include "cons_cell.hpp"
 
+#include "parser.hpp"
+
 /*char *string_to_chars (std :: string str) {
 	char *res = new char [str .length () + 1];
 	strcpy (res, str .c_str ());
 	return res;
 };*/
 
-std :: unique_ptr <object> interpret (cons_cell* cells);
+object* interpret (cons_cell* cells);
 
-std :: unique_ptr <object> sum (cons_cell* arguments) {
-	cons_cell* arg = arguments;
-	std :: vector <int> args; // FIXME no vector?
+int check_args_length (cons_cell* args, int min_length, int max_length) {
+	cons_cell* arg = args;
+	int arg_position = 0;
 
 	while (arg != nullptr) {
-		switch (arg -> car -> type) {
-			case INT: {
-				args .push_back (
-					*get_object_data <int> (arg -> car));
-				break;
-			}
-			case CONS: {
-				args .push_back (
-					*get_object_data <int> (
-						interpret (
-							get_object_data <cons_cell> (arg -> car)) .get ()));
-				break;
-			}
-			default: {
-				throw std :: runtime_error ("SUM_SUPPORT_ONLY_INT_FOR_NOW!");
-				break;
-			}
-		};
-
+		arg_position += 1;
+		
+		if (arg_position > max_length)
+			return 1;
+		
 		arg = arg -> cdr;
-	};
-
-	int res = 0;
-
-	for (auto& it : args) res += it;
-
-	return std :: unique_ptr <object> (create_object (type :: INT, new int (res)));
+	}
+	
+	if (arg_position < min_length)
+		return -1;
+	
+	return 0;
 }
 
-std :: unique_ptr <object> mul (cons_cell* arguments) {
+object* quote (cons_cell* arguments) {
+	if (check_args_length (arguments, 1, 1) != 0)
+		throw std :: runtime_error ("Failed to 'quote', expected 1 parameter!"); // FIXME show error context on level up!
+
+	return copy_object (arguments -> car); // FIXME classical shared_ptr!
+}
+
+object* car (cons_cell* arguments) {
+	if (check_args_length (arguments, 1, 1) != 0)
+		throw std :: runtime_error ("Failed to 'car', expected 1 parameter!"); // FIXME show error context on level up!
+
+	object* arg = arguments -> car;
+
+	object* interpreted_obj = interpret (get_object_data <cons_cell> (arg)); // FIXME check if arg is CONS!
+
+	if (interpreted_obj -> type != type :: CONS)
+		throw std :: runtime_error ("Failed to 'car', expected list as parameter!");
+
+	cons_cell* list = get_object_data <cons_cell> (interpreted_obj);
+
+	object* result = copy_object (list -> car);
+
+	delete interpreted_obj;
+
+	return result;
+}
+
+object* sum (cons_cell* arguments) {
+	int result = 0;
+
+	for (cons_cell* arg = arguments; arg != nullptr; arg = arg -> cdr) {
+		object* arg_object = arg -> car;
+		bool is_created_instance = false;
+
+		if (arg_object -> type == type :: CONS) {
+			arg_object = interpret (get_object_data <cons_cell> (arg_object));
+			is_created_instance = true;
+		}
+
+		if (arg_object -> type == type :: INT)
+			result += (*get_object_data <int> (arg_object));
+		else
+			throw std :: runtime_error ("MUL_SUPPORT_ONLY_INT_FOR_NOW!");
+		
+		if (is_created_instance)
+			delete arg_object;
+	};
+
+	return create_object (type :: INT, new int (result));
+}
+
+object* mul (cons_cell* arguments) {
 	int result = 1;
 
 	for (cons_cell* arg = arguments; arg != nullptr; arg = arg -> cdr) {
 		object* arg_object = arg -> car;
+		bool is_created_instance = false;
 
 		if (arg_object -> type == type :: CONS) {
-			auto expr_res = interpret (get_object_data <cons_cell> (arg_object));
-			arg_object = expr_res .get ();
-			
-			result *= (*get_object_data <int> (arg_object));
-		} else
+			arg_object = interpret (get_object_data <cons_cell> (arg_object));
+			is_created_instance = true;
+		}
 
 		if (arg_object -> type == type :: INT)
 			result *= (*get_object_data <int> (arg_object));
 		else
-			throw std :: runtime_error ("MUL_SUPPORT_ONLY_INT_FOR_NOW!"); 
+			throw std :: runtime_error ("MUL_SUPPORT_ONLY_INT_FOR_NOW!");
+		
+		if (is_created_instance)
+			delete arg_object;
 	};
 
-	/*while (arg != nullptr) {
-		switch (arg -> car -> type) {
-			case INT: {
-				args .push_back (
-					*get_object_data <int> (arg -> car));
-				break;
-			}
-			case CONS: {
-				args .push_back (
-					*get_object_data <int> (
-						interpret (
-							get_object_data <cons_cell> (arg -> car)) .get ()));
-				break;
-			}
-			default: {
-				throw std :: runtime_error ("SUM_SUPPORT_ONLY_INT_FOR_NOW!");
-				break;
-			}
-		};
-
-		arg = arg -> cdr;
-	};*/
-
-	return std :: unique_ptr <object> (create_object (type :: INT, new int (result)));
+	return create_object (type :: INT, new int (result));
 }
 
-std :: unique_ptr <object> interpret (cons_cell* cells) {
+object* interpret (cons_cell* cells) {
 	if (cells == nullptr) // TODO test null-check
 		return nullptr;
 	
@@ -101,6 +118,11 @@ std :: unique_ptr <object> interpret (cons_cell* cells) {
 	if (command -> type != type :: SYMBOL)
 		throw std :: runtime_error ("CAR_IS_NOT_SYMBOL IN " + print (cells));
 
+	if ("quote" == *get_object_data <std :: string> (command))
+		return quote (cells -> cdr);
+	else
+	if ("car" == *get_object_data <std :: string> (command))
+		return car (cells -> cdr);
 	if ("sum" == *get_object_data <std :: string> (command)) // FIXME not only sum!!
 		return sum (cells -> cdr);
 	else
@@ -112,24 +134,14 @@ std :: unique_ptr <object> interpret (cons_cell* cells) {
 
 int main () {
 	try {
-		object* one = create_object (type :: INT, new int (1));
-		object* anotherOne = create_object (type :: INT, new int (1));
-		object* two = create_object (type :: INT, new int (2));
-		object* anotherTwo = create_object (type :: INT, new int (2));
-		object* sum = create_object (type :: SYMBOL, new std :: string ("sum"));
-		object* anotherSum = create_object (type :: SYMBOL, new std :: string ("sum"));
-		object* mul = create_object (type :: SYMBOL, new std :: string ("mul"));
-		
-		cons_cell* test = cons (create_object (type :: CONS, cons (anotherSum, cons (anotherTwo, cons (anotherOne, nullptr)))), nullptr);
-		test = cons (two, test);
-		test = cons (mul, test);
-		//test = cons (cell_type :: CONS, test, nullptr);
-
-		std :: cout << "structure : " << print (test) << std :: endl;
-		//std :: cout << to_dot_struct (test) << std :: endl;
-		std :: cout << "result : " << print (interpret (test) .get ()) << std :: endl;
-
-		delete test;
+		auto tokens = tokenize ("(car (quote (A B C)))");
+		cons_cell* expr = build_s_expr (tokens);
+		//cons_cell* expr = cons (create_object (type :: SYMBOL, new std :: string ("quote")), orig);
+		std :: cout << "parsed expression : " << print (expr -> car) << std :: endl;
+		object* result = interpret (get_object_data <cons_cell> (expr -> car));
+		std :: cout << "interpret result : " << print (result) << std :: endl;
+		delete result;
+		delete expr;
 	} catch (std :: exception& e) {
 		std :: cout << "Exception thrown: " << e .what () << std :: endl;
 	};

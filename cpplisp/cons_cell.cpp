@@ -5,11 +5,11 @@
 
 cons_cell :: ~cons_cell () {
 	if (car != nullptr) {
-		std :: cout << "deleting CAR: " << print (car) << std :: endl;
+		//std :: cout << "deleting CAR: " << print (car) << std :: endl;
 		delete car;
 	}
 	if (cdr != nullptr) {
-		std :: cout << "deleting CDR: " << print (cdr) << std :: endl;
+		//std :: cout << "deleting CDR: " << print (cdr) << std :: endl;
 		delete cdr;
 	}
 };

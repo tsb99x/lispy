@@ -3,7 +3,7 @@
 
 #include "object.hpp"
 
-struct cons_cell {
+struct cons_cell { // FIXME cons only for navigation, not interpretation
 	object* car; // copy address register, head, first
 	cons_cell* cdr; // copy decrement register, tail, rest
 

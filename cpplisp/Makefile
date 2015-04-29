@@ -7,7 +7,7 @@ LDFLAGS =
 
 BIN = lisp
 
-all: object.o cons_cell.o lisp.o
+all: object.o cons_cell.o parser.o lisp.o
 	$(CXX) $(LDFLAGS) -o $(BIN) $^
 
 #$(EXE): $(OBJ)

@@ -12,11 +12,12 @@ enum type {
 struct object {
 	type type;
 	void* data;
-	
+
 	~object ();
 };
 
 object* create_object (type, void*);
+object* copy_object (object*);
 std :: string print (object*);
 std :: string to_dot_struct (object*);
 
