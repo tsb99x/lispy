@@ -21,8 +21,8 @@ std :: list <std :: string> tokenize (const std :: string& sourceCode) {
 	return result;
 };
 
-cons_cell* build_s_expr (std :: list <std :: string>& tokens) {
-	cons_cell* cell = nullptr;
+std :: shared_ptr < const cons_cell > build_s_expr (std :: list <std :: string>& tokens) {
+	std :: shared_ptr < const cons_cell > cell;
 
 	std :: regex integer ("[1-9]+"); // FIXME minus in front of number?
 	
@@ -37,9 +37,9 @@ cons_cell* build_s_expr (std :: list <std :: string>& tokens) {
 			return cell;
 		else
 		if (std :: regex_match (token, integer))
-			cell = cons (create_object (type :: INT, new int (std :: atoi (token .c_str ()))), cell);
+			cell = cons (create_object (type :: INT, std :: shared_ptr < int > (new int (std :: atoi (token .c_str ())))), cell);
 		else
-			cell = cons (create_object (type :: SYMBOL, new std :: string (token)), cell);
+			cell = cons (create_object (type :: SYMBOL, std :: shared_ptr < std :: string > (new std :: string (token))), cell);
 	};
 	
 	return cell;

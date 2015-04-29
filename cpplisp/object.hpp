@@ -10,20 +10,20 @@ enum type {
 };
 
 struct object {
-	type type;
-	void* data;
-
-	~object ();
+	const type type;
+	const std :: shared_ptr < const void > data;
 };
 
-object* create_object (type, void*);
-object* copy_object (object*);
-std :: string print (object*);
-std :: string to_dot_struct (object*);
+std :: string print (std :: shared_ptr < object >);
 
 template < typename T >
-T* get_object_data (object* object) {
-	return static_cast < T* > (object -> data);
+std :: shared_ptr < object > create_object (type type, std :: shared_ptr < T > data) {
+	return std :: shared_ptr < object > (new object { type, std :: static_pointer_cast < const void > (data) });
+};
+
+template < typename T >
+std :: shared_ptr < const T > get_object_data (std :: shared_ptr < object > object) {
+	return std :: static_pointer_cast < const T > (object -> data);
 };
 
 #endif

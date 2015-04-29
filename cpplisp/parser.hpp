@@ -6,6 +6,6 @@
 #include <list>
 
 std :: list <std :: string> tokenize (const std :: string& sourceCode);
-cons_cell* build_s_expr (std :: list <std :: string>& tokens);
+std :: shared_ptr < const cons_cell > build_s_expr (std :: list <std :: string>& tokens);
 
 #endif

@@ -4,14 +4,11 @@
 #include "object.hpp"
 
 struct cons_cell { // FIXME cons only for navigation, not interpretation
-	object* car; // copy address register, head, first
-	cons_cell* cdr; // copy decrement register, tail, rest
-
-	~cons_cell ();
+	std :: shared_ptr < object > car; // copy address register, head, first
+	std :: shared_ptr < const cons_cell > cdr; // copy decrement register, tail, rest
 };
 
-cons_cell* cons (object*, cons_cell*);
-std :: string print (cons_cell*);
-std :: string to_dot_struct (cons_cell*);
+std :: shared_ptr < const cons_cell > cons (std :: shared_ptr < object >, std :: shared_ptr < const cons_cell >);
+std :: string print (std :: shared_ptr < const cons_cell >);
 
 #endif
