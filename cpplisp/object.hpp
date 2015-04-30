@@ -14,6 +14,8 @@ struct object {
 	const std :: shared_ptr < const void > data;
 };
 
+bool is_atom (std :: shared_ptr <object>);
+
 std :: string print (std :: shared_ptr < object >);
 
 template < typename T >
@@ -25,5 +27,7 @@ template < typename T >
 std :: shared_ptr < const T > get_object_data (std :: shared_ptr < object > object) { // FIXME check for null!
 	return std :: static_pointer_cast < const T > (object -> data);
 };
+
+extern std :: shared_ptr <object> NIL;
 
 #endif

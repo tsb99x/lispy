@@ -1,6 +1,7 @@
 #include "parser.hpp"
 
 #include <regex>
+#include <iostream>
 #include <cstdlib>
 
 std :: list <std :: string> tokenize (const std :: string& sourceCode) {
@@ -22,9 +23,9 @@ std :: list <std :: string> tokenize (const std :: string& sourceCode) {
 };
 
 std :: shared_ptr < object > build_s_expr (std :: list <std :: string>& tokens) {
-	std :: shared_ptr < object > cell;
+	std :: shared_ptr < object > cell = NIL; // FIXME analogue of NIL
 
-	std :: regex integer ("[1-9]+");
+	std :: regex integer ("\\d+");
 
 	while (tokens .size () > 0) {
 		std :: string token = tokens .back ();

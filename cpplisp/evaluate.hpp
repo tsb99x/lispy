@@ -3,6 +3,9 @@
 
 #include "cons_cell.hpp"
 
-std :: shared_ptr < object > evaluate (std :: shared_ptr < object >);
+#include <unordered_map>
+
+using context = std :: unordered_map < std :: string, std :: shared_ptr < object > >;
+std :: shared_ptr < object > evaluate (std :: shared_ptr < object >, context&);
 
 #endif
