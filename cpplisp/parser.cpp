@@ -4,13 +4,13 @@
 #include <cstdlib>
 
 std :: list <std :: string> tokenize (const std :: string& sourceCode) {
-	std :: regex openParens ("\\(");
+	std :: regex openParens  ("\\(");
 	std :: regex closeParens ("\\)");
-	std :: regex tokens ("([^\\s]+)");
+	std :: regex tokens      ("([^\\s]+)");
 
-	std :: string openParensProcessed = std :: regex_replace (sourceCode, openParens, " ( ");
-	std :: string closeParensProcessed = std :: regex_replace (openParensProcessed, closeParens, " ) ");
-	
+	auto openParensProcessed  = std :: regex_replace (sourceCode, openParens, " ( ");
+	auto closeParensProcessed = std :: regex_replace (openParensProcessed, closeParens, " ) ");
+
 	std :: list <std :: string> result;
 
 	std :: copy (

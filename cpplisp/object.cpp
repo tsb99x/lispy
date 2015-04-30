@@ -7,7 +7,7 @@
 
 std :: string print (std :: shared_ptr < object > object) {
 	if (not object)
-		throw std :: runtime_error ("NULLPTR");
+		throw std :: runtime_error ("OBJECT_IS_NULLPTR");
 	
 	switch (object -> type) {
 		case INT:

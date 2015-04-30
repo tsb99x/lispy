@@ -4,7 +4,7 @@
 #include "object.hpp"
 
 struct cons_cell { // FIXME cons only for navigation, not interpretation
-	std :: shared_ptr < object > car; // copy address register, head, first
+	std :: shared_ptr < object > car; // copy address register, head, first // FIXME const!
 	std :: shared_ptr < const cons_cell > cdr; // copy decrement register, tail, rest
 };
 
