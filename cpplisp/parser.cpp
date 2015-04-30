@@ -21,25 +21,31 @@ std :: list <std :: string> tokenize (const std :: string& sourceCode) {
 	return result;
 };
 
-std :: shared_ptr < const cons_cell > build_s_expr (std :: list <std :: string>& tokens) {
-	std :: shared_ptr < const cons_cell > cell;
+std :: shared_ptr < object > build_s_expr (std :: list <std :: string>& tokens) {
+	std :: shared_ptr < object > cell;
 
-	std :: regex integer ("[1-9]+"); // FIXME minus in front of number?
-	
+	std :: regex integer ("[1-9]+");
+
 	while (tokens .size () > 0) {
 		std :: string token = tokens .back ();
 		tokens .pop_back ();
 		
-		if (token == ")")
-			cell = cons (create_object (type :: CONS, build_s_expr (tokens)), cell);
-		else
-		if (token == "(")
+		if (token == ")") {
+			auto cons_cell = build_s_expr (tokens);
+			cell = cons (cons_cell, cell);
+		} else
+			
+		if (token == "(") {
 			return cell;
-		else
-		if (std :: regex_match (token, integer))
-			cell = cons (create_object (type :: INT, std :: shared_ptr < int > (new int (std :: atoi (token .c_str ())))), cell);
-		else
-			cell = cons (create_object (type :: SYMBOL, std :: shared_ptr < std :: string > (new std :: string (token))), cell);
+		} else
+
+		if (std :: regex_match (token, integer)) {
+			auto integer = create_object (type :: INT, std :: shared_ptr < int > (new int (std :: atoi (token .c_str ()))));
+			cell = cons (integer, cell);
+		} else {
+			auto symbol = create_object (type :: SYMBOL, std :: shared_ptr < std :: string > (new std :: string (token)));
+			cell = cons (symbol, cell);
+		}
 	};
 	
 	return cell;

@@ -22,7 +22,7 @@ std :: shared_ptr < object > create_object (type type, std :: shared_ptr < T > d
 };
 
 template < typename T >
-std :: shared_ptr < const T > get_object_data (std :: shared_ptr < object > object) {
+std :: shared_ptr < const T > get_object_data (std :: shared_ptr < object > object) { // FIXME check for null!
 	return std :: static_pointer_cast < const T > (object -> data);
 };
 

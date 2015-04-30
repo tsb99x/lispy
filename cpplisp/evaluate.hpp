@@ -3,6 +3,6 @@
 
 #include "cons_cell.hpp"
 
-std :: shared_ptr < object > evaluate (std :: shared_ptr < const cons_cell > cells);
+std :: shared_ptr < object > evaluate (std :: shared_ptr < object >);
 
 #endif
