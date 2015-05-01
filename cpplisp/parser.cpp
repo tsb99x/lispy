@@ -22,6 +22,17 @@ std :: list <std :: string> tokenize (const std :: string& sourceCode) {
 	return result;
 };
 
+const int parens_balance (const std :: list <std :: string>& tokens) {
+	int open_brackets_count = 0;
+
+	for (const auto& token : tokens) {
+		if (token == "(") open_brackets_count++;
+		if (token == ")") open_brackets_count--;
+	}
+
+	return open_brackets_count;
+};
+
 std :: shared_ptr < object > build_s_expr (std :: list <std :: string>& tokens) {
 	std :: shared_ptr < object > cell = NIL; // FIXME analogue of NIL
 

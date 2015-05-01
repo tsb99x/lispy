@@ -154,10 +154,15 @@ std :: shared_ptr <object> lambda (std :: shared_ptr <object> lambda_args, std :
 	while (lambda_list != NIL and arguments != NIL) {
 		auto variable_name = *get_object_data <std :: string> (get_object_data <cons_cell> (lambda_list) -> car);
 		auto variable_value = evaluate (get_object_data <cons_cell> (arguments) -> car, outer_context);
-		 
-		std :: pair < std :: string, std :: shared_ptr <object> > new_entry (variable_name, variable_value);
 
-		new_context .insert (new_entry);
+		std :: pair < std :: string, std :: shared_ptr <object> > new_entry (variable_name, variable_value);
+		auto existing_one = new_context .find (variable_name);
+		if (existing_one != new_context .end()) {
+			new_context .erase (existing_one);
+			std :: cout << "erased original value!" << std :: endl;
+		}
+		auto new_one = new_context .insert (new_entry);
+		std :: cout << "inserted " <<  << " with value of " << print ((new_one . first) -> second) << std :: endl;
 		
 		lambda_list = get_object_data <cons_cell> (lambda_list) -> cdr;
 		arguments = get_object_data <cons_cell> (arguments) -> cdr;
@@ -169,43 +174,23 @@ std :: shared_ptr <object> lambda (std :: shared_ptr <object> lambda_args, std :
 	return evaluate (lambda_expr, new_context);
 }
 
-/*std :: shared_ptr < object > sum (std :: shared_ptr <object> arguments) {
-	int result = 0;
+std :: shared_ptr <object> label (std :: shared_ptr <object> this_label, std :: shared_ptr <object> label_args, std :: shared_ptr <object> lambda_args, context outer_context) {
+	std :: cout << "evaluating label: " << print (this_label) << std :: endl;
+	
+	if (check_args_length (label_args, 2, 2) != 0)
+		throw std :: runtime_error ("Failed to 'label', expected 2 parameters!"); // FIXME show error context on level up!
+	
+	auto lambda_name = get_object_data <cons_cell> (label_args) -> car; // FIXME check for atom symbol
+	auto lambda_cons = get_object_data <cons_cell> (get_object_data <cons_cell> (label_args) -> cdr) -> car;
+	
+	context new_context = outer_context;
+	std :: pair < std :: string, std :: shared_ptr <object> > new_entry (*get_object_data <std :: string> (lambda_name), get_object_data <cons_cell> (this_label) -> car);
+	new_context .insert (new_entry);
+	
+	return lambda (get_object_data <cons_cell> (lambda_cons) -> cdr, lambda_args, new_context);
+}
 
-	for (auto arg = arguments; arg; arg = arg -> cdr) {
-		auto arg_object = arg -> car;
-
-		if (arg_object -> type == type :: CONS)
-			arg_object = evaluate (get_object_data <cons_cell> (arg_object));
-
-		if (arg_object -> type == type :: INT)
-			result += (*get_object_data <int> (arg_object));
-		else
-			throw std :: runtime_error ("MUL_SUPPORT_ONLY_INT_FOR_NOW!");
-	};
-
-	return create_object (type :: INT, std :: shared_ptr <int> (new int (result)));
-}*/
-
-/*std :: shared_ptr < object > mul (std :: shared_ptr <object> arguments) {
-	int result = 1;
-
-	for (auto arg = arguments; arg; arg = arg -> cdr) {
-		auto arg_object = arg -> car;
-
-		if (arg_object -> type == type :: CONS)
-			arg_object = evaluate (get_object_data <cons_cell> (arg_object));
-
-		if (arg_object -> type == type :: INT)
-			result *= (*get_object_data <int> (arg_object));
-		else
-			throw std :: runtime_error ("MUL_SUPPORT_ONLY_INT_FOR_NOW!");
-	};
-
-	return create_object (type :: INT, std :: shared_ptr <int> (new int (result)));
-}*/
-
-std :: shared_ptr < object > evaluate (std :: shared_ptr < object > obj, context& context) { // FIXME evaluate, not interpret!	
+std :: shared_ptr < object > evaluate (std :: shared_ptr < object > obj, context& context) {
 	if (obj == NIL)
 		throw std :: runtime_error ("PASSED_EMPTY_FORM_TO_EVAL");
 
@@ -213,6 +198,7 @@ std :: shared_ptr < object > evaluate (std :: shared_ptr < object > obj, context
 		auto symbol_value = context .find (*get_object_data <std :: string> (obj));
 		if (symbol_value == context .end())
 			throw std :: runtime_error ("FAILED TO EVALUATE SYMBOL " + *get_object_data <std :: string> (obj));
+		std :: cout << "substituting " << print (symbol_value -> second) << " for " << symbol_value -> first << std :: endl;
 		return symbol_value -> second;
 	}
 
@@ -222,11 +208,15 @@ std :: shared_ptr < object > evaluate (std :: shared_ptr < object > obj, context
 	auto list = get_object_data <cons_cell> (obj);
 	auto function = list -> car;
 
-	if (function != NIL and function -> type == type :: CONS) { // check for lambda
+	if (function != NIL and function -> type == type :: CONS) { // check for lambda or label
 		auto car = get_object_data <cons_cell> (function) -> car;
-		if (car != NIL and car -> type == type :: SYMBOL)
+		if (car != NIL and car -> type == type :: SYMBOL) {
 			if (*get_object_data <std :: string> (car) == "lambda")
 				return lambda (get_object_data <cons_cell> (function) -> cdr, list -> cdr, context);
+		
+			if (*get_object_data <std :: string> (car) == "label")
+				return label (obj, get_object_data <cons_cell> (function) -> cdr, list -> cdr, context);
+		}
 	}
 
 	if (function -> type != type :: SYMBOL)
@@ -253,13 +243,11 @@ std :: shared_ptr < object > evaluate (std :: shared_ptr < object > obj, context
 	if ("cond" == *get_object_data <std :: string> (function))
 		return cond (list -> cdr, context);
 	
-	//if ("lambda" == *get_object_data)
+	auto symbol_value = context .find (*get_object_data <std :: string> (function)); // FIXME to lookup!
+	if (symbol_value == context .end())
+		throw std :: runtime_error ("FAILED TO EVALUATE SYMBOL " + *get_object_data <std :: string> (obj));
 
-	/*if ("sum" == *get_object_data <std :: string> (command))
-		return sum (list -> cdr);
-
-	if ("mul" == *get_object_data <std :: string> (command))
-		return mul (list -> cdr);*/
+	return evaluate (cons (symbol_value -> second, list -> cdr), context);
 
 	throw std :: runtime_error ("UNKNOWN_FUNCTION: " + *get_object_data <std :: string> (function));
 };

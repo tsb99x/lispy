@@ -17,18 +17,20 @@ int main (int argc, char* argv[]) {
 	variables_context .insert (a);
 	
 	try {
-		std :: string src;
+		//std :: string src;
 
-		if (argc > 1)
-			src = std :: string (argv [ 1 ]);
-		else
+		//if (argc > 1)
+		//	src = std :: string (argv [ 1 ]);
+		//else
 		//auto tokens = tokenize ("(quote A)");
 		//auto tokens = tokenize ("(car (quote (A B C)))");
 		//auto tokens = tokenize ("(cdr (quote (A B C)))");
 		//auto tokens = tokenize ("(cons (quote A) (quote (B C)))");
 		//src = "(equal (car (quote (A B))) (quote A))";
 
-		// FIXME check for parenteses balance!
+		std :: cout << "C++ LISP INTERPRETER." << std :: endl;
+		std :: cout << "C-c to exit." << std :: endl;
+		std :: cout << std :: endl;
 
 		while (true) {
 			std :: string input;
@@ -40,6 +42,20 @@ int main (int argc, char* argv[]) {
 				continue;
 			
 			auto tokens = tokenize (input);
+
+			while (parens_balance (tokens) > 0) {
+				std :: string temp;
+
+				std :: cout << ">> ";
+				std :: getline (std :: cin, temp);
+
+				input += temp;
+				tokens = tokenize (input);
+			};
+			
+			if (parens_balance (tokens) < 0)
+				throw std :: runtime_error ("THERE ARE MORE CLOSING PARENTHESES IN EXPR THAN EXPECTED");
+
 			auto expr = build_s_expr (tokens);
 			auto result = evaluate (get_object_data <cons_cell> (expr) -> car, :: variables_context);
 
