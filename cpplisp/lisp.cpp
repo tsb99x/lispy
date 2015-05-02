@@ -8,27 +8,10 @@
 #include "parser.hpp"
 #include "evaluate.hpp"
 
-context variables_context;
-
 int main (int argc, char* argv[]) {
-	
-	std :: pair < std :: string, std :: shared_ptr <object> > a ("X", create_object (type :: INT, std :: shared_ptr <int> (new int (100))));
-	
-	variables_context .insert (a);
-	
+
 	try {
-		//std :: string src;
-
-		//if (argc > 1)
-		//	src = std :: string (argv [ 1 ]);
-		//else
-		//auto tokens = tokenize ("(quote A)");
-		//auto tokens = tokenize ("(car (quote (A B C)))");
-		//auto tokens = tokenize ("(cdr (quote (A B C)))");
-		//auto tokens = tokenize ("(cons (quote A) (quote (B C)))");
-		//src = "(equal (car (quote (A B))) (quote A))";
-
-		std :: cout << "C++ LISP INTERPRETER." << std :: endl;
+		std :: cout << "C++ LISP interpret REPL." << std :: endl;
 		std :: cout << "C-c to exit." << std :: endl;
 		std :: cout << std :: endl;
 
@@ -52,27 +35,16 @@ int main (int argc, char* argv[]) {
 				input += temp;
 				tokens = tokenize (input);
 			};
-			
+
 			if (parens_balance (tokens) < 0)
 				throw std :: runtime_error ("THERE ARE MORE CLOSING PARENTHESES IN EXPR THAN EXPECTED");
 
 			auto expr = build_s_expr (tokens);
-			auto result = evaluate (get_object_data <cons_cell> (expr) -> car, :: variables_context);
+			Context repl_environment (nullptr);
+			auto result = evaluate (get_object_data <cons_cell> (expr) -> car, repl_environment);
 
 			std :: cout << print (result) << std :: endl;
 		}
-		
-		/*auto tokens = tokenize (src);
-		
-		std :: cout << "Tokenized expression : ";
-		for (auto& it : tokens) std :: cout << " " << it << " ";
-		std :: cout << std :: endl;
-
-		auto expr   = build_s_expr (tokens);
-		std :: cout << "Parsed expression : " << print (get_object_data <cons_cell> (expr) -> car) << std :: endl;
-
-		auto result = evaluate (get_object_data <cons_cell> (expr) -> car);
-		std :: cout << "Interpret result : " << print (result) << std :: endl;*/
 	} catch (std :: exception& e) {
 		std :: cout << "Exception thrown: " << e .what () << std :: endl;
 	};
