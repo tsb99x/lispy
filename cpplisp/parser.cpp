@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
-std :: list <std :: string> tokenize (const std :: string& sourceCode) {
+std :: list < std :: string > tokenize (const std :: string& sourceCode) {
 	std :: regex openParens  ("\\(");
 	std :: regex closeParens ("\\)");
 	std :: regex tokens      ("([^\\s]+)");

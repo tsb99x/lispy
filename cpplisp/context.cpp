@@ -6,7 +6,7 @@
 
 Context :: Context (const Context* outer_context) : outer_context (outer_context) { };
 
-void Context :: add_symbol (const std :: string& symbol_name, const std :: shared_ptr <object> symbol_value) {
+void Context :: add_symbol (const std :: string& symbol_name, const std :: shared_ptr <object>& symbol_value) {
 	auto new_entry = std :: make_pair (symbol_name, symbol_value);
 	std :: cout << "added: " << symbol_name << " with value: " << print (symbol_value) << std :: endl;
 	symbols .insert (new_entry); // FIXME check for existance error

@@ -4,6 +4,6 @@
 #include "cons_cell.hpp"
 #include "context.hpp"
 
-std :: shared_ptr < object > evaluate (std :: shared_ptr < object >, const Context&);
+std :: shared_ptr < object > evaluate (std :: shared_ptr < object >, Context&);
 
 #endif

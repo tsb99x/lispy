@@ -1,5 +1,4 @@
 #include <iostream>
-#include <vector>
 #include <memory>
 
 #include "object.hpp"
@@ -15,10 +14,12 @@ int main (int argc, char* argv[]) {
 		std :: cout << "C-c to exit." << std :: endl;
 		std :: cout << std :: endl;
 
+		Context repl_environment (nullptr);
+
 		while (true) {
 			std :: string input;
 			
-			std :: cout << "lisp repl > ";
+			std :: cout << "lisp > ";
 			std :: getline (std :: cin, input);
 			
 			if (input .empty ())
@@ -40,7 +41,6 @@ int main (int argc, char* argv[]) {
 				throw std :: runtime_error ("THERE ARE MORE CLOSING PARENTHESES IN EXPR THAN EXPECTED");
 
 			auto expr = build_s_expr (tokens);
-			Context repl_environment (nullptr);
 			auto result = evaluate (get_object_data <cons_cell> (expr) -> car, repl_environment);
 
 			std :: cout << print (result) << std :: endl;

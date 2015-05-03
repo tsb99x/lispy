@@ -17,18 +17,26 @@ bool is_atom (std :: shared_ptr <object> a) {
 	return a == NIL || a -> type != type :: CONS;
 }
 
+bool is_cons (std :: shared_ptr <object> a) {
+	return a -> type == type :: CONS;
+};
+
+/*std :: shared_ptr < object > car (std :: shared_ptr < object > list) {
+	return get_object_data < cons_cell > (list);
+}*/
+
 std :: string print (std :: shared_ptr < object > object) {
 	if (not object)
 		throw std :: runtime_error ("Failed to print nil object!");
 	
 	switch (object -> type) {
-		case INT:
+		case type :: INT:
 			return std :: to_string (*get_object_data <int> (object));
 		break;
-		case SYMBOL:
+		case type :: SYMBOL:
 			return *get_object_data <std :: string> (object);
 		break;
-		case CONS: {
+		case type :: CONS: {
 			auto cell = object;
 			std :: string result = " ";
 

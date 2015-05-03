@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum type {
+enum class type {
 	INT,
 	SYMBOL,
 	CONS
@@ -15,9 +15,13 @@ struct object {
 };
 
 bool is_atom (std :: shared_ptr <object>);
+bool is_cons (std :: shared_ptr <object>);
+
+//std :: shared_ptr <object> car (std :: shared_ptr <object>);
 
 std :: string print (std :: shared_ptr < object >);
 
+// FIXME type as template parameter
 template < typename T >
 std :: shared_ptr < object > create_object (type type, std :: shared_ptr < T > data) {
 	return std :: shared_ptr < object > (new object { type, std :: static_pointer_cast < const void > (data) });
