@@ -1,16 +1,21 @@
 #include "parser.hpp"
 
 #include <regex>
-#include <iostream>
+
+using std :: regex;
+using std :: regex_replace;
+
 #include <cstdlib>
 
-std :: list < std :: string > tokenize (const std :: string& sourceCode) {
-	std :: regex openParens  ("\\(");
-	std :: regex closeParens ("\\)");
-	std :: regex tokens      ("([^\\s]+)");
+using std :: atoi;
 
-	auto openParensProcessed  = std :: regex_replace (sourceCode, openParens, " ( ");
-	auto closeParensProcessed = std :: regex_replace (openParensProcessed, closeParens, " ) ");
+std :: list < std :: string > tokenize (const std :: string& sourceCode) {
+	regex openParens  ("\\(");
+	regex closeParens ("\\)");
+	regex tokens      ("([^\\s]+)");
+
+	auto openParensProcessed  = regex_replace (sourceCode, openParens, " ( ");
+	auto closeParensProcessed = regex_replace (openParensProcessed, closeParens, " ) ");
 
 	std :: list <std :: string> result;
 
@@ -22,43 +27,55 @@ std :: list < std :: string > tokenize (const std :: string& sourceCode) {
 	return result;
 };
 
+#include <stack>
+
 const int parens_balance (const std :: list <std :: string>& tokens) {
-	int open_brackets_count = 0;
-
+	std :: stack < char > parens; // FIXME replace by list
+	
 	for (const auto& token : tokens) {
-		if (token == "(") open_brackets_count++;
-		if (token == ")") open_brackets_count--;
-	}
+		if (token == "(") {
+			parens .emplace ('(');
+		} else
 
-	return open_brackets_count;
+		if (token == ")") {
+			if (parens .empty () or parens .top () == ')')
+				return -1;
+			parens .pop ();
+		}
+	}
+	
+	return parens .empty () ? 0 : 1;
 };
+
+/**
+	FIXME rename!
+*/
 
 std :: shared_ptr < object > build_s_expr (std :: list <std :: string>& tokens) {
-	std :: shared_ptr < object > cell = NIL; // FIXME analogue of NIL
+	regex integer ("\\d+");
 
-	std :: regex integer ("\\d+");
+	if (tokens .empty ())
+		throw std :: runtime_error ("Failed to build expression: token list is empty!");
 
-	while (tokens .size () > 0) {
-		std :: string token = tokens .back ();
-		tokens .pop_back ();
-		
-		if (token == ")") {
-			auto cons_cell = build_s_expr (tokens);
-			cell = cons (cons_cell, cell);
-		} else
-			
-		if (token == "(") {
-			return cell;
-		} else
-
-		if (std :: regex_match (token, integer)) {
-			auto integer = create_object (type :: INT, std :: shared_ptr < int > (new int (std :: atoi (token .c_str ()))));
-			cell = cons (integer, cell);
-		} else {
-			auto symbol = create_object (type :: SYMBOL, std :: shared_ptr < std :: string > (new std :: string (token)));
-			cell = cons (symbol, cell);
-		}
-	};
+	std :: string token = tokens .back ();
+	tokens .pop_back ();
 	
-	return cell;
-};
+	if (token == "(")
+		throw std :: runtime_error ("Failed to build expression: unexpected character '('!");
+
+	if (token == ")") {
+		std :: shared_ptr < object > list = NIL;
+		
+		while (tokens .back () != "(")
+			list = cons (build_s_expr (tokens), list);
+		tokens .pop_back ();
+
+		return list;
+	} else
+
+	if (std :: regex_match (token, integer)) {
+		return create_object (type :: INT, std :: make_shared < int > (atoi (token .c_str ())));
+	} else
+
+	return create_object (type :: SYMBOL, std :: make_shared < std :: string > (token));
+}

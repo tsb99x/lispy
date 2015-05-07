@@ -1,9 +1,9 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "cons_cell.hpp"
-
 #include <list>
+
+#include "object.hpp"
 
 std :: list <std :: string> tokenize (const std :: string& sourceCode);
 const int parens_balance (const std :: list <std :: string>& tokens);

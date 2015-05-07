@@ -3,14 +3,26 @@
 #include <iostream>
 #include <sstream>
 
-#include "cons_cell.hpp"
+/*object :: object (const object_type & type, const void * data) :
+	 type (type),
+	 data (data)
+{ }
 
-template < >
-std :: shared_ptr < const cons_cell > get_object_data (std :: shared_ptr < object > object) {	
-	if (object -> type != type :: CONS)
-		throw std :: runtime_error ("Failed to get CONS from non-cons object!");
-	
-	return std :: static_pointer_cast < const cons_cell > (object -> data);
+object :: ~object () noexcept {
+	if (type == object_type :: INT)
+		delete static_cast < const int * > (data);
+	if (type == object_type :: SYMBOL)
+		delete static_cast < const std :: string * > (data);
+	if (type == object_type :: CONS)
+		delete static_cast < const cons_cell * > (data);
+}
+
+const object_type & object :: get_type () {
+	return type;
+}*/
+
+std :: shared_ptr < object > cons (std :: shared_ptr < object > car, std :: shared_ptr < object > cdr) {
+	return create_object (type :: CONS, std :: shared_ptr < const cons_cell > (new cons_cell { car, cdr }));
 };
 
 bool is_atom (std :: shared_ptr <object> a) {
@@ -21,9 +33,13 @@ bool is_cons (std :: shared_ptr <object> a) {
 	return a -> type == type :: CONS;
 };
 
-/*std :: shared_ptr < object > car (std :: shared_ptr < object > list) {
-	return get_object_data < cons_cell > (list);
-}*/
+std :: shared_ptr < object > car (std :: shared_ptr < object > pair) {
+	return std :: static_pointer_cast < const cons_cell > (pair -> data) -> car;
+}
+
+std :: shared_ptr < object > cdr (std :: shared_ptr < object > pair) {
+	return std :: static_pointer_cast < const cons_cell > (pair -> data) -> cdr;
+}
 
 std :: string print (std :: shared_ptr < object > object) {
 	if (not object)
@@ -31,24 +47,24 @@ std :: string print (std :: shared_ptr < object > object) {
 	
 	switch (object -> type) {
 		case type :: INT:
-			return std :: to_string (*get_object_data <int> (object));
+			return std :: to_string (*std :: static_pointer_cast < const int > (object -> data));
 		break;
 		case type :: SYMBOL:
-			return *get_object_data <std :: string> (object);
+			return *std :: static_pointer_cast < const std :: string > (object -> data);
 		break;
 		case type :: CONS: {
 			auto cell = object;
 			std :: string result = " ";
 
 			while (cell != NIL) {
-				result += print (get_object_data <cons_cell> (cell) -> car) + " ";
-				
-				if (get_object_data <cons_cell> (cell) -> cdr -> type != type :: CONS) {
-					result += ". " + print (get_object_data <cons_cell> (cell) -> cdr) + " ";
+				result += print (car (cell)) + " ";
+
+				if (not is_cons (cdr (cell))) {
+					result += ". " + print (cdr (cell)) + " ";
 					break;
 				}
 				
-				cell = get_object_data <cons_cell> (cell) -> cdr;
+				cell = cdr (cell);
 			};
 			
 			return "(" + result + ")";

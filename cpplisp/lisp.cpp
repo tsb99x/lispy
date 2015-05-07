@@ -1,9 +1,6 @@
 #include <iostream>
 #include <memory>
 
-#include "object.hpp"
-#include "cons_cell.hpp"
-
 #include "parser.hpp"
 #include "evaluate.hpp"
 
@@ -41,7 +38,7 @@ int main (int argc, char* argv[]) {
 				throw std :: runtime_error ("THERE ARE MORE CLOSING PARENTHESES IN EXPR THAN EXPECTED");
 
 			auto expr = build_s_expr (tokens);
-			auto result = evaluate (get_object_data <cons_cell> (expr) -> car, repl_environment);
+			auto result = evaluate (expr, repl_environment);
 
 			std :: cout << print (result) << std :: endl;
 		}

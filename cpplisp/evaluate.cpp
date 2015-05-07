@@ -1,7 +1,5 @@
 #include "evaluate.hpp"
 
-#include <iostream>
-
 // FIXME put arguments to array?
 // FIXME return arguments count
 // FIXME throw exception here
@@ -15,7 +13,7 @@ int check_args_length (std :: shared_ptr <object> args, int min_length, int max_
 		if (arg_position > max_length)
 			return 1;
 		
-		arg = get_object_data <cons_cell> (arg) -> cdr;
+		arg = cdr (arg);
 	}
 	
 	if (arg_position < min_length)
@@ -24,58 +22,86 @@ int check_args_length (std :: shared_ptr <object> args, int min_length, int max_
 	return 0;
 }
 
-std :: shared_ptr < object > quote (std :: shared_ptr <object> arguments) {
-	std :: cout << "evaluating quote with: " << print (arguments) << std :: endl;
+/**
+	Rule #1 (QUOTE e).
+	Example:
 
+		(quote A)
+
+		=> A
+*/
+
+std :: shared_ptr < object > quote (const std :: shared_ptr < object >& arguments) {
 	if (check_args_length (arguments, 1, 1) != 0)
 		throw std :: runtime_error ("Failed to 'quote', expected 1 parameter!"); // FIXME show error context on level up!
 
-	return get_object_data <cons_cell> (arguments) -> car;
+	return car (arguments);
 }
 
-std :: shared_ptr < object > car (std :: shared_ptr <object> arguments, Context& context) {
-	std :: cout << "evaluating car with: " << print (arguments) << std :: endl;
+/**
+	Rule #2 (CAR e).
+	Example:
 
+		(car (quote (A B C)))
+
+		=> A
+*/
+
+std :: shared_ptr < object > car (const std :: shared_ptr < object >& arguments, Context& context) {
 	if (check_args_length (arguments, 1, 1) != 0)
 		throw std :: runtime_error ("Failed to 'car', expected 1 parameter!"); // FIXME show error context on level up!
 
-	auto evaluated_obj = evaluate (get_object_data <cons_cell> (arguments) -> car, context);
+	auto evaluated_obj = evaluate (car (arguments), context);
 
 	if (not is_cons (evaluated_obj))
 		throw std :: runtime_error ("Failed to 'car', expected list as parameter!");
 
-	auto list = get_object_data < cons_cell > (evaluated_obj);
-	
-	return list -> car;
+	return car (evaluated_obj);
 }
 
-std :: shared_ptr < object > cdr (std :: shared_ptr <object> arguments, Context& context) {
-	std :: cout << "evaluating cdr with: " << print (arguments) << std :: endl;
-	
+/**
+	Rule #3 (CDR e).
+	Example:
+
+		(cdr (quote (A B C)))
+
+		=> (B C)
+*/
+
+std :: shared_ptr < object > cdr (const std :: shared_ptr < object >& arguments, Context& context) {	
 	if (check_args_length (arguments, 1, 1) != 0)
 		throw std :: runtime_error ("Failed to 'cdr', expected 1 parameter!"); // FIXME show error context on level up!
 
-	auto evaluated_obj = evaluate (get_object_data <cons_cell> (arguments) -> car, context);
+	auto evaluated_obj = evaluate (car (arguments), context);
 
 	if (not is_cons (evaluated_obj))
 		throw std :: runtime_error ("Failed to 'cdr', expected list as parameter!");
 
-	return get_object_data < cons_cell > (evaluated_obj) -> cdr;
+	return cdr (evaluated_obj);
 }
 
-std :: shared_ptr < object > cons (std :: shared_ptr <object> arguments, Context& context) {
-	std :: cout << "evaluating cons with: " << print (arguments) << std :: endl;
-	
+/**
+	Rule #4 (CONS e1 e2).
+	Example:
+
+		(cons
+			(quote A)
+			(quote (B C)))
+
+		=> (A B C)
+*/
+
+std :: shared_ptr < object > cons (const std :: shared_ptr < object >& arguments, Context& context) {	
 	if (check_args_length (arguments, 2, 2) != 0)
 		throw std :: runtime_error ("Failed to 'cons', expected 2 parameters!"); // FIXME show error context on level up!
 
-	auto e1 = evaluate (get_object_data <cons_cell> (arguments) -> car, context);
-	auto e2 = evaluate (get_object_data <cons_cell> (get_object_data <cons_cell> (arguments) -> cdr) -> car, context);
+	auto e1 = evaluate (car (arguments), context);
+	auto e2 = evaluate (car (cdr (arguments)), context);
 
 	return cons (e1, e2);
 }
 
-bool is_equal (std :: shared_ptr <object> a, std :: shared_ptr <object> b) {
+bool is_equal (const std :: shared_ptr < object >& a, const std :: shared_ptr < object >& b) {
 	if (a == b)
 		return true;
 
@@ -83,94 +109,121 @@ bool is_equal (std :: shared_ptr <object> a, std :: shared_ptr <object> b) {
 		return false;
 
 	if (a -> type == type :: CONS)
-		return is_equal (get_object_data <cons_cell> (a) -> car, get_object_data <cons_cell> (b) -> car)
-			and is_equal (get_object_data <cons_cell> (a) -> cdr, get_object_data <cons_cell> (b) -> cdr);
+		return is_equal (car (a), car (b))
+			and is_equal (cdr (a), cdr (b));
 
 	if (a -> type == type :: INT)
-		return *get_object_data < int > (a) == *get_object_data < int > (b);
+		return *std :: static_pointer_cast < const int > (a -> data) == *std :: static_pointer_cast < const int > (b -> data);
 
 	if (a -> type == type :: SYMBOL)
-		return *get_object_data < std :: string > (a) == *get_object_data < std :: string > (b);
+		return *std :: static_pointer_cast < const std :: string > (a -> data) == *std :: static_pointer_cast < const std :: string > (b -> data);
 
 	throw std :: runtime_error ("FAILED TO CHECK EQUALITY OF UNKNOWN TYPE!");
 }
 
-std :: shared_ptr < object > equal (std :: shared_ptr <object> arguments, Context& context) {
-	std :: cout << "evaluating equal with: " << print (arguments) << std :: endl;
+/**
+	Rule #5 (EQUAL e1 e2).
+	Example:
 
+		(equal
+			(car (quote (A B)))
+			(quote A))
+
+		=> T
+*/
+
+std :: shared_ptr < object > equal (const std :: shared_ptr < object >& arguments, Context& context) {
 	if (check_args_length (arguments, 2, 2) != 0)
 		throw std :: runtime_error ("Failed to 'equal', expected 2 parameters!"); // FIXME show error context on level up!
 
-	auto e1 = evaluate (get_object_data <cons_cell> (arguments) -> car, context);
-	auto e2 = evaluate (get_object_data <cons_cell> (get_object_data <cons_cell> (arguments) -> cdr) -> car, context);
+	auto e1 = evaluate (car (arguments), context);
+	auto e2 = evaluate (car (cdr (arguments)), context);
 
 	return is_equal (e1, e2) ? create_object (type :: SYMBOL, std :: make_shared <std :: string> ("T"))
 									 : NIL;
 }
 
-std :: shared_ptr < object > atom (std :: shared_ptr <object> arguments, Context& context) {
-	std :: cout << "evaluating atom with: " << print (arguments) << std :: endl;
-	
+/**
+	Rule #6 (ATOM e).
+	Example:
+
+		(atom A)
+
+		=> T
+*/
+
+std :: shared_ptr < object > atom (const std :: shared_ptr < object >& arguments, Context& context) {	
 	if (check_args_length (arguments, 1, 1) != 0)
 		throw std :: runtime_error ("Failed to 'atom', expected 1 parameters!"); // FIXME show error context on level up!
 
-	auto e = evaluate (get_object_data <cons_cell> (arguments) -> car, context);
+	auto e = evaluate (car (arguments), context);
 
 	return is_atom (e) ? create_object (type :: SYMBOL, std :: make_shared <std :: string> ("T"))
 							 : NIL;
 }
 
-std :: shared_ptr <object> cond (std :: shared_ptr <object> arguments, Context& context) { // TODO check for structure pass (COND (p e) ... (p e))
-	std :: cout << "evaluating cond with: " << print (arguments) << std :: endl;
-	
+/**
+	Rule #7 (COND (p1 e1) ... (pn en)).
+	Example:
+
+		(cond
+			((atom (quote A)) (quote B))
+			((quote T) (quote C)))
+
+		=> B
+*/
+
+std :: shared_ptr <object> cond (const std :: shared_ptr < object >& arguments, Context& context) { // TODO check for structure pass (COND (p e) ... (p e))
+
 	auto cond_obj = arguments;
 	
 	while (cond_obj != NIL) {
-		auto list = get_object_data <cons_cell> (cond_obj) -> car;
+		auto list = car (cond_obj);
 		
 		if (list -> type != type :: CONS)
 			throw std :: runtime_error ("Failed to COND, condition clause must be a list");
 		
-		auto cond = evaluate (get_object_data <cons_cell> (list) -> car, context);
+		auto cond = evaluate (car (list), context);
 
 		if (cond != NIL)
-			return evaluate (get_object_data <cons_cell> (get_object_data <cons_cell> (list) -> cdr) -> car, context);
+			return evaluate (car (cdr (list)), context);
 		
-		cond_obj = get_object_data <cons_cell> (cond_obj) -> cdr;
+		cond_obj = cdr (cond_obj);
 	}
 	
 	return NIL;
 }
 
-std :: shared_ptr <object> lambda (std :: shared_ptr <object> lambda_args, std :: shared_ptr <object> arguments, Context& outer_context) {
-	std :: cout << "evaluating lambda with: " << print (lambda_args) << ", " << print (arguments) << std :: endl;
+/**
+	Rule #9 ((LAMBDA (v1 ... vn) e) e1 ... en).
+	Example:
 
+		((lambda (X Y)
+			(cond (car X) Y))
+		 (quote (A B))
+		 (cdr (quote (C D))))
+
+		=> (A D)
+*/
+
+std :: shared_ptr <object> lambda (const std :: shared_ptr < object >& lambda_args, std :: shared_ptr <object> arguments, Context& outer_context) {
 	Context new_context (&outer_context);
 	
 	if (check_args_length (lambda_args, 2, 2) != 0)
 		throw std :: runtime_error ("Failed to 'lambda', expected 2 parameters!"); // FIXME show error context on level up!
 
 	// FIXME check if lambda_list is really a list of atom symbols!
-	auto lambda_list = get_object_data <cons_cell> (lambda_args) -> car;
-	auto lambda_expr = get_object_data <cons_cell> (get_object_data <cons_cell> (lambda_args) -> cdr) -> car;
+	auto lambda_list = car (lambda_args);
+	auto lambda_expr = car (cdr (lambda_args));
 	
 	while (lambda_list != NIL and arguments != NIL) {
-		auto variable_name = *get_object_data <std :: string> (get_object_data <cons_cell> (lambda_list) -> car);
-		auto variable_value = evaluate (get_object_data <cons_cell> (arguments) -> car, outer_context);
-
-		/*std :: pair < std :: string, std :: shared_ptr <object> > new_entry (variable_name, variable_value);
-		auto existing_one = new_context .find (variable_name);
-		if (existing_one != new_context .end()) {
-			new_context .erase (existing_one);
-			std :: cout << "erased original value!" << std :: endl;
-		}
-		auto new_one = new_context .insert (new_entry);
-		std :: cout << "inserted " << variable_name << " with value of " << print ((new_one . first) -> second) << std :: endl;*/
+		auto variable_name = *std :: static_pointer_cast < const std :: string > (car (lambda_list) -> data);
+		auto variable_value = evaluate (car (arguments), outer_context);
 		
 		new_context .add_symbol (variable_name, variable_value);
 		
-		lambda_list = get_object_data <cons_cell> (lambda_list) -> cdr;
-		arguments = get_object_data <cons_cell> (arguments) -> cdr;
+		lambda_list = cdr (lambda_list);
+		arguments = cdr (arguments);
 	}
 	
 	if (lambda_list != arguments)
@@ -179,96 +232,112 @@ std :: shared_ptr <object> lambda (std :: shared_ptr <object> lambda_args, std :
 	return evaluate (lambda_expr, new_context);
 }
 
-std :: shared_ptr <object> label (std :: shared_ptr <object> this_label, std :: shared_ptr <object> label_args, std :: shared_ptr <object> lambda_args, Context& outer_context) {
-	std :: cout << "evaluating label: " << print (this_label) << std :: endl;
+/**
+	Rule #10 ((LABEL f (LAMBDA (v1 ... vn) e)) e1 ... en).
+	Example:
 
+		((label ff
+			(lambda (x)
+				(cond
+					((atom x) x)
+					((quote t) (ff (car x))))))
+		(quote ((A B) C)))
+
+		=> A
+*/
+
+std :: shared_ptr <object> label (const std :: shared_ptr < object > this_label, const std :: shared_ptr < object >& label_args, const std :: shared_ptr < object >& lambda_args, Context& outer_context) {
 	if (check_args_length (label_args, 2, 2) != 0)
 		throw std :: runtime_error ("Failed to 'label', expected 2 parameters!"); // FIXME show error context on level up!
 	
-	auto lambda_name = get_object_data <cons_cell> (label_args) -> car; // FIXME check for atom symbol
-	auto lambda_cons = get_object_data <cons_cell> (get_object_data <cons_cell> (label_args) -> cdr) -> car;
+	auto lambda_name = car (label_args); // FIXME check for atom symbol
+	auto lambda_cons = car (cdr (label_args));
 	
 	Context new_context (&outer_context);
-	auto lambda_name_str = *get_object_data <std :: string> (lambda_name);
-	new_context .add_symbol (lambda_name_str, get_object_data <cons_cell> (this_label) -> car);
-	
-	return lambda (get_object_data <cons_cell> (lambda_cons) -> cdr, lambda_args, new_context);
+	auto lambda_name_str = *std :: static_pointer_cast < const std :: string > (lambda_name -> data);
+	new_context .add_symbol (lambda_name_str, car (this_label));
+
+	return lambda (cdr (lambda_cons), lambda_args, new_context);
 }
 
-std :: shared_ptr <object> defun (std :: shared_ptr <object> args, Context& context) {
+/**
+	In general sense, `(defun f (p1 ... pn) e)` is equal to `f = (label f (lambda (p1 ... pn) e))`.
+*/
+
+std :: shared_ptr <object> defun (const std :: shared_ptr < object > args, Context& context) {
 	// FIXME check if args is function!
-	std :: cout << "running defun with: " << print (args) << std :: endl;
 	
-	auto func_name = get_object_data <cons_cell> (args) -> car;
-	auto func_parameters_and_expr = get_object_data <cons_cell> (args) -> cdr;
+	auto func_name = car (args);
+	auto func_parameters_and_expr = cdr (args);
 	
 	auto lambda_symbol = create_object (type :: SYMBOL, std :: make_shared <std::string> ("lambda"));
 	auto label_symbol = create_object (type :: SYMBOL, std :: make_shared <std::string> ("label"));
 
 	auto new_lambda = cons (lambda_symbol, func_parameters_and_expr);
-	std :: cout << print (new_lambda) << std :: endl;
 	auto new_label = cons (label_symbol, cons (func_name, cons (new_lambda, NIL)));
-	std::cout << "1" << std :: endl << print (new_label) << std :: endl;
 
-	context .add_symbol (*get_object_data <std::string> (func_name), new_label);
+	context .add_symbol (*std :: static_pointer_cast < const std :: string > (func_name -> data), new_label);
 	
 	return func_name;
 }
 
-std :: shared_ptr < object > evaluate (std :: shared_ptr < object > obj, Context& context) {
+std :: shared_ptr < object > evaluate (const std :: shared_ptr < object >& obj, Context& context) {
 	if (obj == NIL)
 		throw std :: runtime_error ("PASSED_EMPTY_FORM_TO_EVAL");
 
+	/**
+		Rule #8, atom value.
+	*/
+
 	if (obj -> type == type :: SYMBOL)
-		return context .lookup (*get_object_data <std :: string> (obj));
+		return context .lookup (*std :: static_pointer_cast < const std :: string > (obj -> data));
 
 	if (obj -> type != type :: CONS)
 		return obj;
-	
-	auto list = get_object_data <cons_cell> (obj);
-	auto function = list -> car;
+
+	auto function = car (obj);
 
 	if (function != NIL and function -> type == type :: CONS) { // check for lambda or label
-		auto car = get_object_data <cons_cell> (function) -> car;
-		if (car != NIL and car -> type == type :: SYMBOL) {
-			if (*get_object_data <std :: string> (car) == "lambda")
-				return lambda (get_object_data <cons_cell> (function) -> cdr, list -> cdr, context);
-		
-			if (*get_object_data <std :: string> (car) == "label")
-				return label (obj, get_object_data <cons_cell> (function) -> cdr, list -> cdr, context);
+		auto first = car (function);
+		if (first != NIL and first -> type == type :: SYMBOL) {
+			if (*std :: static_pointer_cast < const std :: string > (first -> data) == "lambda")
+				return lambda (cdr (function), cdr (obj), context);
+
+			if (*std :: static_pointer_cast < const std :: string > (first -> data) == "label")
+				return label (obj, cdr (function), cdr (obj), context);
 		}
 	}
 
 	if (function -> type != type :: SYMBOL)
 		throw std :: runtime_error (print (function) + " IS_NOT_FUNCTION_SYMBOL_IN " + print (obj));
 
-	if ("quote" == *get_object_data <std :: string> (function)) // FIXME define elementary operators as permanent?
-		return quote (list -> cdr);
+	auto func_name = *std :: static_pointer_cast < const std :: string > (function -> data);
 
-	if ("car" == *get_object_data <std :: string> (function))
-		return car (list -> cdr, context);
+	if (func_name == "quote") // FIXME define elementary operators as permanent?
+		return quote (cdr (obj));
 
-	if ("cdr" == *get_object_data <std :: string> (function))
-		return cdr (list -> cdr, context);
+	if (func_name == "car")
+		return car (cdr (obj), context);
 
-	if ("cons" == *get_object_data <std :: string> (function))
-		return cons (list -> cdr, context);
+	if (func_name == "cdr")
+		return cdr (cdr (obj), context);
 
-	if ("equal" == *get_object_data <std :: string> (function))
-		return equal (list -> cdr, context);
+	if (func_name == "cons")
+		return cons (cdr (obj), context);
+
+	if (func_name == "equal")
+		return equal (cdr (obj), context);
 	
-	if ("atom" == *get_object_data <std :: string> (function))
-		return atom (list -> cdr, context);
+	if (func_name == "atom")
+		return atom (cdr (obj), context);
 	
-	if ("cond" == *get_object_data <std :: string> (function))
-		return cond (list -> cdr, context);
+	if (func_name == "cond")
+		return cond (cdr (obj), context);
 	
-	if ("defun" == *get_object_data <std :: string> (function))
-		return defun (list -> cdr, context);
+	if (func_name == "defun")
+		return defun (cdr (obj), context);
 	
-	auto symbol_value = context .lookup (*get_object_data <std :: string> (function));
+	auto symbol_value = context .lookup (func_name);
 
-	return evaluate (cons (symbol_value, list -> cdr), context);
-
-	throw std :: runtime_error ("UNKNOWN_FUNCTION: " + *get_object_data <std :: string> (function));
+	return evaluate (cons (symbol_value, cdr (obj)), context);
 };
