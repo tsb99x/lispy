@@ -1,5 +1,6 @@
 #include "context.hpp"
 
+#include <stdexcept>
 #include <utility>
 
 Context :: Context (const Context* outer_context) : outer_context (outer_context) { };

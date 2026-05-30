@@ -1,6 +1,7 @@
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
+#include <memory>
 #include <string>
 
 /*enum class object_type { // add string

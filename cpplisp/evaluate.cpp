@@ -1,5 +1,7 @@
 #include "evaluate.hpp"
 
+#include <stdexcept>
+
 // FIXME put arguments to array?
 // FIXME return arguments count
 // FIXME throw exception here
