@@ -1,11 +1,11 @@
-var fs = require ('fs');
+var fs = require('fs');
 
-var tokenize = function (sourceString) {	
+var tokenize = function (sourceString) {
 	return sourceString //.replace (/\s/g,  ' ')
-							  .replace (/\(/g, ' ( ')
-							  .replace (/\)/g, ' ) ')
-							  .trim ()
-							  .split   (/\s+/g);
+		.replace(/\(/g, ' ( ')
+		.replace(/\)/g, ' ) ')
+		.trim()
+		.split(/\s+/g);
 };
 
 /*var parenthesize = function (sourceTokens, list) {
@@ -27,66 +27,66 @@ var tokenize = function (sourceString) {
 	return parenthesize (sourceTokens, list .concat (categorize (token)));
 };*/
 
-var accumulateTokens = function (elements, acc, tokensCounter) {	
-	if (elements .length === 0)
+var accumulateTokens = function (elements, acc, tokensCounter) {
+	if (elements.length === 0)
 		return acc;
 
-	var token = elements [0];
+	var token = elements[0];
 
 	if (token === '(') {
-		var result = accumulateTokens (elements .slice (1), [ ], 1);
-		return accumulateTokens (
-			elements .slice (result .tokensCounter),
-			acc .concat ([ result .accumulator ]),
-			tokensCounter + result .tokensCounter);
+		var result = accumulateTokens(elements.slice(1), [], 1);
+		return accumulateTokens(
+			elements.slice(result.tokensCounter),
+			acc.concat([result.accumulator]),
+			tokensCounter + result.tokensCounter);
 	};
-	
+
 	if (token === ')') {
 		return {
-			tokensCounter : tokensCounter + 1,
+			tokensCounter: tokensCounter + 1,
 			accumulator: acc
 		};
 	}
 
-	return accumulateTokens (
-		elements .slice (1),
-		acc .concat (categorize (token)),
+	return accumulateTokens(
+		elements.slice(1),
+		acc.concat(categorize(token)),
 		tokensCounter + 1
 	);
 };
 
-var categorize = function (input) {	
-	if (!isNaN (parseFloat (input))) {
-		return { type : 'literal', value : parseFloat (input) };
+var categorize = function (input) {
+	if (!isNaN(parseFloat(input))) {
+		return { type: 'literal', value: parseFloat(input) };
 	} else
 
-	if (input [0] === '"' && input .slice (-1) === '"') {
-		return { type : 'literal', value : input .slice (1, -1) };
-	} else
-	
-	return { type : 'identifier', value : input };
+		if (input[0] === '"' && input.slice(-1) === '"') {
+			return { type: 'literal', value: input.slice(1, -1) };
+		} else
+
+			return { type: 'identifier', value: input };
 };
 
 var Context = {
-	get : function (identifier) {
-		if (identifier in this .scope) {
-			return this .scope [ identifier ];
+	get: function (identifier) {
+		if (identifier in this.scope) {
+			return this.scope[identifier];
 		} else
-		
-		if (this .parent !== undefined) {
-			return this .parent .get (identifier);
-		} else
-		
-		throw new Error ('Unknown identifier "' + identifier + '"!');
+
+			if (this.parent !== undefined) {
+				return this.parent.get(identifier);
+			} else
+
+				throw new Error('Unknown identifier "' + identifier + '"!');
 	}
 };
 
 var createContext = function (scope, parent) {
-	var obj = Object .create (Context);
-	
-	obj .scope = scope;
-	obj .parent = parent;
-	
+	var obj = Object.create(Context);
+
+	obj.scope = scope;
+	obj.parent = parent;
+
 	return obj;
 };
 
@@ -106,22 +106,22 @@ var createContext = function (scope, parent) {
 };*/
 
 var library = {
-	first : function (x) {
+	first: function (x) {
 		//if (arguments .length > 1) throw new Error ('Expected 1 argument for first!');
-		
-		return x [0];
+
+		return x[0];
 	},
-	
-	rest : function (x) {
+
+	rest: function (x) {
 		//if (arguments .length > 1) throw new Error ('Expected 1 argument for first!');
-		
-		return x .slice (1);
+
+		return x.slice(1);
 	},
-	
-	print : function (x) {
+
+	print: function (x) {
 		//if (arguments .length > 1) throw new Error ('Expected 1 argument for first!');
-		
-		console .log (x);
+
+		console.log(x);
 		return x;
 	}
 };
@@ -132,23 +132,23 @@ var interpret = function (input, context) {
 	} else*/
 
 	if (input instanceof Array) {
-		return interpretList (input, context);
+		return interpretList(input, context);
 	} else
 
-	if (input .type === 'identifier') {
-		return context .get (input .value);
-	} else
-	
-	return input .value;
+		if (input.type === 'identifier') {
+			return context.get(input.value);
+		} else
+
+			return input.value;
 };
 
 var interpretList = function (input, context) {
-	if (input .length > 0 && input [0] .value in special) {
-		return special [input [0] .value] (input, context);
+	if (input.length > 0 && input[0].value in special) {
+		return special[input[0].value](input, context);
 	} else {
-		var list = input .map (function (x) { return interpret (x, context); });
-		if (list [0] instanceof Function) {
-			return list [0] .apply (undefined, list .slice (1));
+		var list = input.map(function (x) { return interpret(x, context); });
+		if (list[0] instanceof Function) {
+			return list[0].apply(undefined, list.slice(1));
 		} else {
 			return list;
 		}
@@ -157,26 +157,26 @@ var interpretList = function (input, context) {
 
 var special = {
 	/* form of (lambda (params) expr) */
-	lambda : function (input, context) {		
+	lambda: function (input, context) {
 		return function (/* arguments */) {
 			var lambdaArguments = arguments;
-			var lambdaScope = input [1] .reduce (function (acc, x, i) {
-				acc [x .value] = lambdaArguments [i];
+			var lambdaScope = input[1].reduce(function (acc, x, i) {
+				acc[x.value] = lambdaArguments[i];
 				return acc;
-			}, { });
-			
-			return interpret (input [2], createContext (lambdaScope, context));
+			}, {});
+
+			return interpret(input[2], createContext(lambdaScope, context));
 		};
 	}
 };
 
 var processedString =
-	accumulateTokens (
-		tokenize (
-			fs .readFileSync (
+	accumulateTokens(
+		tokenize(
+			fs.readFileSync(
 				'test.lisp',
-				{ encoding : 'utf-8' })),
-		[ ],
+				{ encoding: 'utf-8' })),
+		[],
 		0);
 
-console .log (interpret (processedString, createContext (library)));
+console.log(interpret(processedString, createContext(library)));
